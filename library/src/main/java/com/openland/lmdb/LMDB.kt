@@ -36,7 +36,16 @@ class LMDBEnvironment(val id: Long, private val jni: LMDBJNI) {
     }
 }
 
-class LMDBDatabase(val id: Long, private val jni: LMDBJNI)
+class LMDBDatabase(val id: Long, private val jni: LMDBJNI) {
+
+    fun put(tx: LMDBTransaction, key: String, value: String) {
+        jni.put(tx.id, this.id, key, value)
+    }
+
+    fun get(tx: LMDBTransaction, key: String): String? {
+        return jni.get(tx.id, this.id, key)
+    }
+}
 
 class LMDBTransaction(val id: Long, private val jni: LMDBJNI) {
 
@@ -68,7 +77,14 @@ class LMDBJNI {
     external fun abortTx(txId: Long)
 
     // Database
+
     external fun openDatabase(txId: Long, name: String): Long
+
+    // Operations
+
+    external fun put(txId: Long, dbId: Long, key: String, value: String)
+    external fun clear(txId: Long, dbId: Long, key: String)
+    external fun get(txId: Long, dbID: Long, key: String): String?
 
     external fun testString(): String
 }

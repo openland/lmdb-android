@@ -70,11 +70,53 @@ Java_com_openland_lmdb_LMDBJNI_abortTx(JNIEnv *env, jobject /* this */, jlong tx
     mdb_txn_abort((MDB_txn *) txnRaw);
 }
 
-extern "C" JNIEXPORT void JNICALL
+extern "C" JNIEXPORT jlong JNICALL
 Java_com_openland_lmdb_LMDBJNI_openDatabase(JNIEnv *env, jobject /* this */, jlong txnRaw, jstring nameRaw) {
     MDB_dbi dbi;
     const char *name = env->GetStringUTFChars(nameRaw, nullptr);
     if (const int c = mdb_dbi_open((MDB_txn *) txnRaw, name, MDB_CREATE, &dbi)) {
         throwLMDBError(env, c);
     }
+    return (long) dbi;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_openland_lmdb_LMDBJNI_put(JNIEnv *env, jobject /* this */, jlong txnRaw, jlong dbRaw, jstring keyRaw,
+                                   jstring valueRaw) {
+    MDB_val key, value;
+
+    const char *keyUtf = env->GetStringUTFChars(keyRaw, nullptr);
+    key.mv_data = (void *) keyUtf;
+    key.mv_size = env->GetStringUTFLength(keyRaw);
+
+    const char *valueUtf = env->GetStringUTFChars(valueRaw, nullptr);
+    value.mv_data = (void *) valueUtf;
+    value.mv_size = env->GetStringUTFLength(valueRaw);
+
+    if (const int c = mdb_put((MDB_txn *) txnRaw, (MDB_dbi) dbRaw, &key, &value, 0)) {
+        throwLMDBError(env, c);
+    }
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_openland_lmdb_LMDBJNI_get(JNIEnv *env, jobject /* this */, jlong txnRaw, jlong dbRaw, jstring keyRaw) {
+    MDB_val key, value;
+
+    const char *keyUtf = env->GetStringUTFChars(keyRaw, nullptr);
+    key.mv_data = (void *) keyUtf;
+    key.mv_size = static_cast<size_t>(env->GetStringUTFLength(keyRaw));
+
+    const int c = mdb_get((MDB_txn *) txnRaw, (MDB_dbi) dbRaw, &key, &value);
+    if (c && c != MDB_NOTFOUND) {
+        throwLMDBError(env, c);
+    }
+    if (c == MDB_NOTFOUND) {
+        return NULL;
+    }
+
+    // Copy data to avoid buffer overflow
+    char *buf = (char *) malloc(value.mv_size + 1);
+    buf[value.mv_size] = 0;
+    memcpy(buf, value.mv_data, value.mv_size);
+    return env->NewStringUTF(static_cast<const char *>(buf));
 }

@@ -2,6 +2,7 @@ package com.openland.lmdb.sample
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import com.openland.lmdb.LMDB
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -16,9 +17,15 @@ class MainActivity : AppCompatActivity() {
 
         val env = LMDB.createEnvironment(filesDir.absolutePath + "/app.db")
 
-        val tx = env.startTransaction()
+        var tx = env.startTransaction()
         val db = tx.openDatabase("database")
+        db.put(tx, "key1", "value2")
         tx.commit()
+
+        tx = env.startTransaction(true)
+        val v = db.get(tx, "key1")
+        Log.d("LMDB", "V: $v")
+        tx.abort()
 
         env.close()
 
