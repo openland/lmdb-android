@@ -1,6 +1,8 @@
 apply plugin: 'com.android.library'
-
 apply plugin: 'kotlin-android'
+apply plugin: 'digital.wup.android-maven-publish'
+
+version = '1.0.1'
 
 android {
     compileSdkVersion 29
@@ -27,6 +29,27 @@ android {
         cmake {
             path "src/main/cpp/CMakeLists.txt"
             version "3.10.2"
+        }
+    }
+}
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+publishing {
+    repositories {
+        maven {
+            url = "https://maven.pkg.github.com/openland"
+            credentials {
+                username = "ex3ndr"
+                password = properties.get("github.token", "")
+            }
+        }
+    }
+    publications {
+        mavenAar(MavenPublication) {
+            artifactId = "lmdb-android"
+            from components.android
         }
     }
 }
