@@ -1,6 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'digital.wup.android-maven-publish'
+apply plugin: 'com.novoda.bintray-release'
 
 version = '1.0.1'
 
@@ -36,22 +36,14 @@ android {
 Properties properties = new Properties()
 properties.load(project.rootProject.file('local.properties').newDataInputStream())
 
-publishing {
-    repositories {
-        maven {
-            url = "https://maven.pkg.github.com/openland"
-            credentials {
-                username = "ex3ndr"
-                password = properties.get("github.token", "")
-            }
-        }
-    }
-    publications {
-        mavenAar(MavenPublication) {
-            artifactId = "lmdb-android"
-            from components.android
-        }
-    }
+publish {
+    userOrg = 'openland'
+    repoName = 'maven'
+    groupId = 'com.openland'
+    artifactId = 'lmdb-android'
+    publishVersion = '1.0.1'
+    desc = 'Fresh LMDB bindings for Android'
+    website = 'https://github.com/openland/lmdb-android'
 }
 
 dependencies {
